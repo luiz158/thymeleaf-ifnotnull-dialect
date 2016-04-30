@@ -5,10 +5,20 @@
  */
 
 apply plugin: 'groovy'
+apply plugin: 'codenarc'
 apply plugin: 'maven'
 apply from: 'https://raw.githubusercontent.com/ultraq/gradle-support/1.2.2/gradle-support.gradle'
 apply from: 'https://raw.githubusercontent.com/ultraq/gradle-support/1.2.2/maven-support.gradle'
 apply from: 'https://raw.githubusercontent.com/ultraq/gradle-support/1.2.2/bundle.gradle'
+
+buildscript {
+	repositories {
+		mavenCentral()
+	}
+	dependencies {
+		classpath 'org.gmetrics:GMetrics:0.7'
+	}
+}
 
 //project.name = 'Thymeleaf If-Not-Null Dialect'
 project.description = 'Output elements and values only if the value exist'
@@ -27,12 +37,17 @@ dependencies {
 	)
 	testCompile(
 		'junit:junit:4.12',
-		'nz.net.ultraq.thymeleaf:thymeleaf-testing-junit:1.1.1',
+		'nz.net.ultraq.thymeleaf:thymeleaf-testing-junit:1.2.0',
 		'org.thymeleaf:thymeleaf-testing:2.1.4.RELEASE'
 	)
 	testRuntime(
 		'org.slf4j:slf4j-simple:1.7.12'
 	)
+}
+
+codenarc {
+	configFile = file('.codenarc.groovy')
+	toolVersion = '0.25.2'
 }
 
 test {
