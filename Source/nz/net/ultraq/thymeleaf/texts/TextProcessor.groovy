@@ -16,34 +16,60 @@
 
 package nz.net.ultraq.thymeleaf.texts
 
-import org.thymeleaf.dom.Node
-import org.thymeleaf.dom.Text
-import org.thymeleaf.standard.processor.attr.StandardTextAttrProcessor
+import org.thymeleaf.context.ITemplateContext
+import org.thymeleaf.engine.AttributeName
+import org.thymeleaf.model.IProcessableElementTag
+import org.thymeleaf.processor.element.AbstractAttributeTagProcessor
+import org.thymeleaf.processor.element.IElementTagStructureHandler
+import org.thymeleaf.standard.expression.StandardExpressions
+import org.thymeleaf.standard.processor.StandardTextTagProcessor
+import org.thymeleaf.templatemode.TemplateMode
+import org.unbescape.html.HtmlEscape
 
 /**
- * Attribute processor for 'ifnotnull:text', outputs text if the value
+ * Attribute processor for {@code ifnotnull:text}, outputs text if the value
  * referenced is not null.
  * 
  * @author Emanuel Rabina
  */
-class TextProcessor extends AbstractTextProcessor {
+class TextProcessor extends AbstractAttributeTagProcessor {
 
-	final int precedence = StandardTextAttrProcessor.ATTR_PRECEDENCE + 1
+	static final String NAME = 'text'
 
 	/**
-	 * Constructor, set this processor to work on the 'text' attribute.
+	 * Constructor, set this processor to work on the {@code ifnotnull:text}
+	 * attribute.
+	 * 
+	 * @param templateMode
+	 * @param dialectPrefix
 	 */
-	TextProcessor() {
+	TextProcessor(TemplateMode templateMode, String dialectPrefix) {
 
-		super('text')
+		super(templateMode, dialectPrefix, null, false, NAME, true, StandardTextTagProcessor.PRECEDENCE + 1, true)
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Evaluate the expression given to this processor, outputting it as a child
+	 * text node if not null.
+	 * 
+	 * @param context
+	 * @param tag
+	 * @param attributeName
+	 * @param attributeValue
+	 * @param structureHandler
 	 */
 	@Override
-	protected Node outputNodeForText(String text) {
+	protected void doProcess(ITemplateContext context, IProcessableElementTag tag,
+		AttributeName attributeName, String attributeValue, IElementTagStructureHandler structureHandler) {
 
-		return new Text(text)
+		def output = StandardExpressions.getExpressionParser(context.configuration)
+			.parseExpression(context, attributeValue)
+			.execute(context)
+		if (output) {
+			structureHandler.setBody(HtmlEscape.escapeHtml5(output.toString()), false)
+		}
+		else {
+			structureHandler.removeElement()
+		}
 	}
 }

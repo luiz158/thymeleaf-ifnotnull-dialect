@@ -16,35 +16,61 @@
 
 package nz.net.ultraq.thymeleaf.texts
 
-import org.thymeleaf.dom.Macro
-import org.thymeleaf.dom.Node
-import org.thymeleaf.standard.expression.StandardExpressionExecutionContext
-import org.thymeleaf.standard.processor.attr.StandardUtextAttrProcessor
+import org.thymeleaf.context.ITemplateContext
+import org.thymeleaf.engine.AttributeName
+import org.thymeleaf.model.IProcessableElementTag
+import org.thymeleaf.processor.element.AbstractAttributeTagProcessor
+import org.thymeleaf.processor.element.IElementTagStructureHandler
+import org.thymeleaf.standard.expression.StandardExpressions
+import org.thymeleaf.standard.processor.StandardUtextTagProcessor
+import org.thymeleaf.templatemode.TemplateMode
 
 /**
- * Attribute processor for 'ifnotnull:utext', outputs unescaped text if the
- * value referenced is not null.
+ * Attribute processor for {@code ifnotnull:utext}, outputs unescaped text if
+ * the value referenced is not null.
  * 
  * @author Emanuel Rabina
  */
-class UTextProcessor extends AbstractTextProcessor {
+class UTextProcessor extends AbstractAttributeTagProcessor {
 
-	final int precedence = StandardUtextAttrProcessor.ATTR_PRECEDENCE + 1
+	static final String NAME = 'utext'
 
 	/**
-	 * Constructor, set this processor to work on the 'utext' attribute.
+	 * Constructor, set this processor to work on the {@code ifnotnull:utext}
+	 * attribute.
+	 * 
+	 * @param templateMode
+	 * @param dialectPrefix
 	 */
-	UTextProcessor() {
+	UTextProcessor(TemplateMode templateMode, String dialectPrefix) {
 
-		super('utext', StandardExpressionExecutionContext.UNESCAPED_EXPRESSION)
+		super(templateMode, dialectPrefix, null, false, NAME, true, StandardUtextTagProcessor.PRECEDENCE + 1, true)
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Evaluate the expression given to this processor, outputting it as an
+	 * unescaped child text node if not null.
+	 * 
+	 * @param context
+	 * @param tag
+	 * @param attributeName
+	 * @param attributeValue
+	 * @param structureHandler
 	 */
 	@Override
-	protected Node outputNodeForText(String text) {
+	protected void doProcess(ITemplateContext context, IProcessableElementTag tag,
+		AttributeName attributeName, String attributeValue, IElementTagStructureHandler structureHandler) {
 
-		return new Macro(text)
+		// TODO: This expression processing is also used in the layout dialect.
+		//       Create a new shared module for this code!
+		def output = StandardExpressions.getExpressionParser(context.configuration)
+			.parseExpression(context, attributeValue)
+			.execute(context)
+		if (output) {
+			structureHandler.setBody(output.toString(), false)
+		}
+		else {
+			structureHandler.removeElement()
+		}
 	}
 }
